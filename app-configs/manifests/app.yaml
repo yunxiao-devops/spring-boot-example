@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: spring-boot-sample
+  name: spring-boot-sample
+spec:
+  selector:
+    matchLabels:
+      run: spring-boot-sample
+  template:
+    metadata:
+      labels:
+        run: spring-boot-sample
+    spec:
+      containers:
+      - image: nginx
+        name: nginx

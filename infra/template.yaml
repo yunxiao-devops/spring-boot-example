@@ -1,0 +1,339 @@
+Description: >-
+  This template show how to deploy a Node.js environment and do a test based on
+  a new ECS instance. ***WARNING***, this template only supports CentOS.
+Parameters:
+  ArtifactUrl:
+    Type: String
+    Label: Artifact Url
+    Default: world
+  InstanceName:
+    Type: String
+    Description:
+      en: >-
+        The name of ECS instance, [2, 128] English or Chinese characters, must
+        start with a letter or Chinese in size, can contain numbers, '_' or '.',
+        '-'.
+      zh-cn: 'ECS实例名称，[2，128]英文或中文字符，必须以字母或中文开头，可以包含数字、下划线或“.”、“-”。'
+    Label: Instance Name
+    Default: DefaultECSInstanceTest
+  VpcCidrBlock:
+    Type: String
+    Description:
+      en: >-
+        The VPC IP network segment; <br>You can use the following IP network
+        segments: <br><font color='green'>[10.0.0.0/8]</font><br><font
+        color='green'>[172.16.0.0/12]</font><br><font
+        color='green'>[192.168.0.0/16]</font>
+      zh-cn: >-
+        VPC的IP网段；<br>您可以使用以下IP网段：<br><font
+        color='green'>[10.0.0.0/8]</font><br><font
+        color='green'>[172.16.0.0/12]</font><br><font
+        color='green'>[192.168.0/16]</font>
+    AllowedValues:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+    Label: VPC CIDR Block
+    Default: 192.168.0.0/16
+  ZoneId:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::Instance:ZoneId'
+    Description:
+      en: >-
+        ECS Available Zone ID,</font><a
+        href='https://www.alibabacloud.com/help/doc-detail/123712.html'
+        target='_blank'><b> View region and zone info</b><font
+        color='blue'></a>.
+      zh-cn: >-
+        ECS可用区ID,</font><a
+        href='https://help.aliyun.com/document_detail/123712.html'
+        target='_blank'><b> 查看可用区信息</b><font color='blue'></a>.
+    Label: Zone ID
+  NodejsUrl:
+    Type: String
+    Description:
+      en: Download path.
+      zh-cn: 下载路径
+    Label: Nodejs Url
+    Default: 'https://nodejs.org/dist/v6.9.5/node-v6.9.5-linux-x64.tar.xz'
+  ImageId:
+    Type: String
+    Description:
+      en: >-
+        Image ID, represents the image resource to startup one ECS instance,
+        <font><a href='https://www.alibabacloud.com/help/doc-detail/112977.html'
+        target='_blank'><b>View image resources</b></font color='blue'></a>
+      zh-cn: >-
+        镜像ID，ECS实例的镜像资源, <font><a
+        href='https://help.aliyun.com/document_detail/112977.html'
+        target='_blank'><b>查看镜像资源</b></font color='blue'></a>
+    Label: Image ID
+    Default: centos_7
+  VpcName:
+    Type: String
+    Description:
+      en: >-
+        Name of VPC, [2, 128] English or Chinese characters, must start with a
+        letter or Chinese in size, can contain numbers, '_' or '.', '-'.
+      zh-cn: 'VPC 名称，[2，128]英文或中文字符，必须以字母或中文开头，可以包含数字、下划线或“.”、“-”。'
+    Label: VPC Name
+    ConstraintDescription: '[2, 128] English or Chinese characters'
+    MinLength: 2
+    MaxLength: 128
+    Default: DefaultVPCTest
+  InstanceType:
+    Type: String
+    Description:
+      en: >-
+        The ECS instance type,go to the product console to ensure the current
+        instance is available, <font><a
+        href='https://www.alibabacloud.com/help/doc-detail/25378.html'
+        target='_blank'><b>View instance types</b></font color='blue'></a>.
+      zh-cn: >-
+        ECS实例类型，进入产品控制台确保当前实例可用, <font><a
+        href='https://help.aliyun.com/document_detail/25378.html'
+        target='_blank'><b>查看实例类型</b></font color='blue'></a>
+    AllowedValues:
+      - ecs.c5.large
+      - ecs.g5.large
+      - ecs.c5.xlarge
+      - ecs.g5.xlarge
+    Label: Instance Type
+    Default: ecs.c5.large
+  VSwitchCidrBlock:
+    Type: String
+    Description:
+      en: 'CIDR Block of created VSwitch,It must belong to itself VPC CIDR block.'
+      zh-cn: 创建的虚拟交换机的子网，它必须属于自己的VPC网段内
+    Label: VSwitch CIDR Block
+    Default: 192.168.1.0/24
+  InstancePassword:
+    NoEcho: true
+    Type: String
+    Description:
+      en: >-
+        The 8-30 long login password of instance, consists of the uppercase,
+        lowercase letter and number. <br> special characters
+        include（）'~！@#$%^&*_-+=|{}[]:;'<>,.?/.
+      zh-cn: '长度8-30，必须包含大写字母、小写字母、数字、特殊符号三个；<br>特殊字符包括：（）''~！@#$%^&*_-+=|{}[]:;''<>,.?/'
+    AllowedPattern: '[a-zA-Z0-9-\(\)\`\~\!@\#\$%\^&\*-+=\|\{\}\[\]\:\;\‘\,\.\?\/]*'
+    Label: Instance Password
+    ConstraintDescription: >-
+      Length 8-30, must contain upper case letters, lower case letters, Numbers,
+      special symbols three;<br>special characters include:
+      ()'~!@#$%^&*_-+=|{}[]:;'<>,.?/
+    MinLength: 8
+    MaxLength: 30
+  SystemDiskCategory:
+    Type: String
+    AllowedValues:
+      - cloud_efficiency
+      - cloud_ssd
+    Description:
+      en: >-
+        System disk category: efficient cloud disk(cloud_efficiency) or SSD
+        cloud disk(cloud_ssd)
+      zh-cn: 系统盘类别：高效云盘（cloud_efficiency）或固态云盘（cloud_ssd）
+    Label: Instance System Disk Category
+    Default: cloud_ssd
+ROSTemplateFormatVersion: '2015-09-01'
+Metadata:
+  'ALIYUN::ROS::Interface':
+    ParameterGroups:
+      - Parameters:
+          - VpcName
+          - VpcCidrBlock
+          - VSwitchCidrBlock
+        Label:
+          default: VPC
+      - Parameters:
+          - ZoneId
+          - ImageId
+          - InstanceName
+          - InstanceType
+          - SystemDiskCategory
+          - InstancePassword
+        Label:
+          default: ECS
+      - Parameters:
+          - NodejsUrl
+        Label:
+          default: Nodejs
+    TemplateTags:
+      - This template show how to deploy a Node.js environment
+Outputs:
+  WebsiteURL:
+    Description: URL for newly created testing Node.js program.
+    Value:
+      'Fn::Join':
+        - ''
+        - - 'http://'
+          - 'Fn::GetAtt':
+              - WebServer
+              - PublicIp
+          - ':3000'
+Resources:
+  VSwitch:
+    Type: 'ALIYUN::ECS::VSwitch'
+    Properties:
+      ZoneId:
+        Ref: ZoneId
+      VpcId:
+        'Fn::GetAtt':
+          - Vpc
+          - VpcId
+      CidrBlock:
+        Ref: VSwitchCidrBlock
+  WebServerConditionHandle:
+    Type: 'ALIYUN::ROS::WaitConditionHandle'
+  WebServer:
+    Type: 'ALIYUN::ECS::Instance'
+    Properties:
+      InstanceName:
+        Ref: InstanceName
+      IoOptimized: optimized
+      VpcId:
+        'Fn::GetAtt':
+          - Vpc
+          - VpcId
+      UserData:
+        'Fn::Replace':
+          - ros-notify:
+              'Fn::GetAtt':
+                - WebServerConditionHandle
+                - CurlCli
+          - 'Fn::Join':
+              - ''
+              - - |
+                  #!/bin/bash 
+                - NodejsUrl=
+                - Ref: NodejsUrl
+                - |+
+
+                - ArtifactUrl=
+                - Ref: ArtifactUrl
+                - |+
+
+                - |
+                  cd /root 
+                - |
+                  yum -y install aria2 
+                - |
+                  aria2c $NodejsUrl 
+                - |
+                  tar xvf node-v6.9.5-linux-x64.tar.xz 
+                - >
+                  ln -s /root/node-v6.9.5-linux-x64/bin/node
+                  /usr/local/bin/node 
+                - |
+                  ln -s /root/node-v6.9.5-linux-x64/bin/npm /usr/local/bin/npm 
+                - |2
+                   
+                - |
+                  yum -y install git 
+                - >
+                  git clone https://github.com/cnpm/nvm.git ~/.nvm && cd ~/.nvm
+                  && git checkout `git describe --abbrev=0 --tags` 
+                - |2
+                   
+                - |
+                  echo ". ~/.nvm/nvm.sh" >> /etc/profile 
+                - |
+                  source /etc/profile 
+                - |2
+                   
+                - |
+                  nvm list-remote 
+                - |
+                  nvm install v6.9.5 
+                - |
+                  nvm install v7.4.0 
+                - |2
+                   
+                - |
+                  nvm ls 
+                - |
+                  nvm use v7.4.0 
+                - |2
+                   
+                - |
+                  cd /root 
+                - |
+                  touch example.js 
+                - |
+                  Hostname=`hostname` 
+                - |
+                  Port=3000 
+                - |
+                  echo "const http = require('http');" >> example.js 
+                - |
+                  echo "const hostname = '$Hostname';" >> example.js 
+                - |
+                  echo "const port = '$Port';" >> example.js 
+                - >
+                  echo "const server = http.createServer((req, res) => {"  >>
+                  example.js 
+                - |
+                  echo "res.statusCode = 200;" >> example.js 
+                - >
+                  echo "res.setHeader('Content-Type', 'text/plain');" >>
+                  example.js 
+                - |
+                  echo "res.end(\"Hello $ArtifactUrl\");" >> example.js 
+                - |
+                  echo "});" >> example.js 
+                - |
+                  echo "server.listen(port, hostname, () => {" >> example.js 
+                - |
+                  echo "});"  >> example.js 
+                - |2
+                   
+                - |
+                  node /root/example.js & 
+                - |
+                  ros-notify -d '{"data" : "Install Node.js."}'
+      SecurityGroupId:
+        Ref: SecurityGroup
+      VSwitchId:
+        Ref: VSwitch
+      ImageId:
+        Ref: ImageId
+      InstanceType:
+        Ref: InstanceType
+      Password:
+        Ref: InstancePassword
+      SystemDiskCategory:
+        Ref: SystemDiskCategory
+  Vpc:
+    Type: 'ALIYUN::ECS::VPC'
+    Properties:
+      CidrBlock:
+        Ref: VpcCidrBlock
+      VpcName:
+        Ref: VpcName
+  SecurityGroup:
+    Type: 'ALIYUN::ECS::SecurityGroup'
+    Properties:
+      VpcId:
+        Ref: Vpc
+      SecurityGroupIngress:
+        - PortRange: '-1/-1'
+          Priority: 1
+          SourceCidrIp: 0.0.0.0/0
+          IpProtocol: all
+          NicType: internet
+      SecurityGroupEgress:
+        - PortRange: '-1/-1'
+          Priority: 1
+          IpProtocol: all
+          DestCidrIp: 0.0.0.0/0
+          NicType: internet
+  WebServerGroupWaitCondition:
+    Type: 'ALIYUN::ROS::WaitCondition'
+    DependsOn: WebServer
+    Properties:
+      Timeout: 3600
+      Count: 1
+      Handle:
+        Ref: WebServerConditionHandle
+

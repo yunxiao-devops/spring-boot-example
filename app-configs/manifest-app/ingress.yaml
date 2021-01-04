@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: spring-boot-route
+spec:
+  rules:
+    - host: www.${HOST}
+      http:
+        paths:
+          - backend:
+              serviceName: spring-boot-service
+              servicePort: 8080
+            path: /
+

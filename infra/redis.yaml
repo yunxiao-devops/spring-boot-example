@@ -1,0 +1,118 @@
+Parameters:
+  InstanceName:
+    Type: String
+    Description:
+      en: >-
+        The instance name, [2, 128] English or Chinese characters, must start
+        with a letter or Chinese in size, can contain numbers, '_' or '.', '-'.
+      zh-cn: '实例名称，[2，128]英文或中文字符，必须以字母或中文开头，可以包含数字、下划线或“.”、“-”。'
+    Label: Instance Name
+    Default: DefaultRedis
+  EvictionPolicy:
+    Type: String
+    AllowedValues:
+      - noeviction
+      - allkeys-lru
+      - volatile-lru
+      - allkeys-random
+      - volatile-random
+      - volatile-ttl
+    Description:
+      en: >-
+        Cache data eviction strategy: volatile-lru(Most recently used expired
+        data), volatile-ttl(Being expiring data), volatile-random(Any expired
+        data), allkeys-lru（Least recently used data), allkeys-random(Arbitrarily
+        select data)、no-enviction(Do not delete any data)
+      zh-cn: >-
+        缓存数据逐出策略：volatile lru（最近使用的过期数据）、volatile ttl（正在过期数据）、volatile
+        random（任何过期数据）、allkeys lru（最近使用的最少数据）、allkeys random（任意选择数据）、no
+        enviction（不要删除任何数据）
+    Label: Eviction Policy
+    Default: noeviction
+  ZoneId:
+    Type: String
+    AssociationProperty: 'ALIYUN::ECS::Instance:ZoneId'
+    Description:
+      en: >-
+        Make sure that the available regions support the creation of Redis
+        resource specifications;<br><a
+        href='https://www.alibabacloud.com/help/doc-detail/123712.html'
+        target='_blank'><b><font color='blue'>View region and zone
+        info</font></b></a>.
+      zh-cn: >-
+        确保可用区域支持Redis资源规格的创建；<br><a
+        href='https://help.aliyun.com/document_detail/123712.html'
+        target='_blank'><b><font color='blue'>查看可用区信息</font></b></a>.
+    Label: Zone ID
+  Capacity:
+    Type: Number
+    Description:
+      en: 'The capacity of storage instance, unit: MByte'
+      zh-cn: 存储实例的容量，单位为MB
+    AllowedValues:
+      - 1
+      - 2
+      - 4
+      - 8
+      - 16
+      - 32
+      - 64
+      - 128
+      - 256
+      - 512
+    Default: 1
+  Password:
+    NoEcho: true
+    Type: String
+    Description:
+      en: >-
+        The 8-30 long login password of instance, consists of the uppercase,
+        lowercase letter and number. <br> special characters
+        include（）'~！@#$%^&*_-+=|{}[]:;'<>,.?/.
+      zh-cn: '长度8-30，必须包含大写字母、小写字母、数字、特殊符号三个；<br>特殊字符包括：（）''~！@#$%^&*_-+=|{}[]:;''<>,.?/'
+    AllowedPattern: '[a-zA-Z0-9-\(\)\`\~\!@\#\$%\^&\*-+=\|\{\}\[\]\:\;\‘\,\.\?\/]*'
+    Label: Password
+    ConstraintDescription: >-
+      The password is a string of 8 to 30 characters and must contain
+      uppercase/lowercase letters, numbers.
+    MinLength: '8'
+    MaxLength: '30'
+ROSTemplateFormatVersion: '2015-09-01'
+Outputs:
+  InstanceId:
+    Value:
+      'Fn::GetAtt':
+        - KvInstance
+        - InstanceId
+Resources:
+  KvInstance:
+    DependsOn: VSwitch
+    Type: 'ALIYUN::REDIS::Instance'
+    Properties:
+      InstanceName:
+        Ref: InstanceName
+      VpcId:
+        Ref: Vpc
+      EvictionPolicy:
+        Ref: EvictionPolicy
+      ZoneId:
+        Ref: ZoneId
+      Capacity:
+        Ref: Capacity
+      VSwitchId:
+        Ref: VSwitch
+      Password:
+        Ref: Password
+  VSwitch:
+    DependsOn: Vpc
+    Type: 'ALIYUN::ECS::VSwitch'
+    Properties:
+      VpcId:
+        Ref: Vpc
+      ZoneId:
+        Ref: ZoneId
+      CidrBlock: 192.168.10.0/24
+  Vpc:
+    Type: 'ALIYUN::ECS::VPC'
+    Properties:
+      CidrBlock: 192.168.0.0/16

@@ -1,0 +1,172 @@
+{
+  "Description": "Creates VPC ECS instance",
+  "Parameters": {
+    "InstancePublicIP": {
+      "Type": "Boolean",
+      "Description": {
+        "en": "Whether to assign a common IP.",
+        "zh-cn": "是否分配公共IP。"
+      },
+      "Label": "Allocate Public IP",
+      "Default": false
+    },
+    "InstanceImageId": {
+      "Type": "String",
+      "Description": {
+        "en": "Image ID，See detail：<b><a href='https://www.alibabacloud.com/help/doc-detail/112977.html' target='_blank'><font color='blue'>Find the mirror</font></a></b>",
+        "zh-cn": "镜像ID, 详见：<b><a href='https://help.aliyun.com/document_detail/112977.html' target='_blank'><font color='blue'>查找镜像</font></a></b>"
+      },
+      "Label": "Image ID",
+      "Default": "centos_7"
+    },
+    "InstanceType": {
+      "Type": "String",
+      "Description": {
+        "en": "Please confirm the inventory of this specification under the available area; <br>See detail：<a href='https://www.alibabacloud.com/help/doc-detail/25378.html' target='_blank'><b><font color='blue'>Instance specification family</font></a></b>",
+        "zh-cn": "请在可用区域下确认此规格的库存，<br>规格详见： <a href='https://help.aliyun.com/document_detail/25378.html' target='_blank'><b><font color='blue'>实例规格族</font></a></b>"
+      },
+      "Label": "Instance Type",
+      "Default": "ecs.c5.large"
+    },
+    "VSwitchZoneId": {
+      "Type": "String",
+      "AssociationProperty": "ALIYUN::ECS::Instance:ZoneId",
+      "Description": {
+        "en": "Make sure that the available areas support the creation of this ECS resource specification;<br><a href='https://www.alibabacloud.com/help/doc-detail/123712.html' target='_blank'><b><font color='blue'>View region and zone info</font></b></a>",
+        "zh-cn": "确保可用区域支持ECS资源规格的创建;<br><a href='https://help.aliyun.com/document_detail/123712.html' target='_blank'><b><font color='blue'>查看可用区信息</font></b></a>"
+      },
+      "Label": "VSwitch Zone ID"
+    },
+    "InstancePassword": {
+      "NoEcho": true,
+      "Type": "String",
+      "Description": {
+        "en": "Length 8-30, must contain upper case letters, lower case letters, Numbers, special symbols three;<br>special characters include: ()'~!@#$%^&*_-+=|{}[]:;<>,.?/",
+        "zh-cn": "长度8-30，必须包含大写字母、小写字母、数字、特殊符号3种;特殊字符包括:()~!@#$%^&*_-+=|{}[];' <>,.?/"
+      },
+      "AllowedPattern": "[a-zA-Z0-9-\\(\\)\\`\\~\\!@\\#\\$%\\^&\\*-+=\\|\\{\\}\\[\\]\\:\\;\\‘\\,\\.\\?\\/]*",
+      "Label": "Instance Password",
+      "ConstraintDescription": "Length 8-30, must contain upper case letters, lower case letters, Numbers, special symbols three;<br>special characters include: ()'~!@#$%^&*_-+=|{}[]:;'<>,.?/",
+      "MinLength": 8,
+      "MaxLength": 30
+    }
+  },
+  "ROSTemplateFormatVersion": "2015-09-01",
+  "Metadata": {
+    "ALIYUN::ROS::Interface": {
+      "ParameterGroups": [
+        {
+          "Parameters": [
+            "VSwitchZoneId",
+            "InstanceImageId",
+            "InstanceType",
+            "InstancePublicIP",
+            "InstancePassword"
+          ],
+          "Label": {
+            "default": "ECS"
+          }
+        }
+      ],
+      "TemplateTags": [
+        "Creates VPC ECS instance"
+      ]
+    }
+  },
+  "Outputs": {
+    "EcsInstanceId": {
+      "Value": {
+        "Fn::GetAtt": [
+          "EcsInstance",
+          "InstanceId"
+        ]
+      }
+    }
+  },
+  "Resources": {
+    "EcsInstance": {
+      "Type": "ALIYUN::ECS::Instance",
+      "Properties": {
+        "IoOptimized": "optimized",
+        "PrivateIpAddress": "192.168.0.1",
+        "VpcId": {
+          "Ref": "EcsVpc"
+        },
+        "SecurityGroupId": {
+          "Ref": "EcsSecurityGroup"
+        },
+        "VSwitchId": {
+          "Ref": "EcsVSwitch"
+        },
+        "ImageId": {
+          "Ref": "InstanceImageId"
+        },
+        "AllocatePublicIP": {
+          "Ref": "InstancePublicIP"
+        },
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "SystemDiskCategory": "cloud_ssd",
+        "Password": {
+          "Ref": "InstancePassword"
+        }
+      }
+    },
+    "EcsVpc": {
+      "Type": "ALIYUN::ECS::VPC",
+      "Properties": {
+        "CidrBlock": "192.168.0.0/16",
+        "VpcName": {
+          "Fn::Join": [
+            "-",
+            [
+              "StackId",
+              {
+                "Ref": "ALIYUN::StackId"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "EcsSecurityGroup": {
+      "Type": "ALIYUN::ECS::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "EcsVpc"
+        },
+        "SecurityGroupIngress": [
+          {
+            "PortRange": "-1/-1",
+            "Priority": 1,
+            "SourceCidrIp": "0.0.0.0/0",
+            "IpProtocol": "all",
+            "NicType": "intranet"
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "PortRange": "-1/-1",
+            "Priority": 1,
+            "IpProtocol": "all",
+            "DestCidrIp": "0.0.0.0/0",
+            "NicType": "intranet"
+          }
+        ]
+      }
+    },
+    "EcsVSwitch": {
+      "Type": "ALIYUN::ECS::VSwitch",
+      "Properties": {
+        "VpcId": {
+          "Ref": "EcsVpc"
+        },
+        "ZoneId": {
+          "Ref": "VSwitchZoneId"
+        },
+        "CidrBlock": "192.168.0.0/24"
+      }
+    }
+  }
+}
